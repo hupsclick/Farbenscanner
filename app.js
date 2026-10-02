@@ -2998,19 +2998,22 @@ if ("serviceWorker" in navigator) {
             scope: "./"
           }
         )
-        .then(
-          registration => {
+	.then(
+	  registration => {
 
-            setInterval(
-              () =>
-                registration.update(),
-              60 * 60 * 1000
-            );
+		// Beim Start der App sofort nach einer neuen sw.js suchen
+		registration.update();
 
+		// Zusätzlich alle 5 Minuten prüfen
+		setInterval(
+		  () => registration.update(),
+		  5 * 60 * 1000
+		);
 
-            registration.addEventListener(
-              "updatefound",
-              () => {
+		registration.addEventListener(
+		  "updatefound",
+		  () => {
+
 
                 const newWorker =
                   registration.installing;
