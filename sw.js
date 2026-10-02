@@ -1,5 +1,5 @@
 /* FarbenScanner Service Worker – Auto-Update */
-const CACHE_NAME = "farbenscanner-v1.1.1";
+const CACHE_NAME = "farbenscanner-v1.1.2";
 const ASSETS = [
   "./",
   "./index.html",
