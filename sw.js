@@ -1,5 +1,7 @@
-/* FarbenScanner Service Worker – Auto-Update */
+/* FarbenScanner Service Worker – v1.1.2 */
+
 const CACHE_NAME = "farbenscanner-v1.1.2";
+
 const ASSETS = [
   "./",
   "./index.html",
@@ -16,27 +18,31 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
-  // Activate new SW immediately
+
+  // Neuen Service Worker sofort aktivieren
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+    caches.keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
+
   if (req.method !== "GET") return;
 
-  // Network-first for HTML/JS/CSS so updates are picked up quickly
+  // HTML, CSS und JS immer zuerst aus dem Netzwerk
   if (
     req.destination === "document" ||
     req.url.endsWith(".html") ||
@@ -45,24 +51,38 @@ self.addEventListener("fetch", (event) => {
     req.url.endsWith("manifest.json")
   ) {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: "no-cache" })
         .then((res) => {
           const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(req, clone);
+          });
+
           return res;
         })
-        .catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
+        .catch(() =>
+          caches.match(req).then(
+            (cached) => cached || caches.match("./index.html")
+          )
+        )
     );
+
     return;
   }
 
-  // Cache-first for other assets
+  // Bilder und andere Dateien aus dem Cache
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
+
       return fetch(req).then((res) => {
         const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(req, clone);
+        });
+
         return res;
       });
     })
@@ -70,7 +90,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
+  if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
