@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f0f14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FarbenScanner">
+  <meta name="description" content="FarbenScanner – Farben aus Kamera oder Bild erkennen, Paletten und Vorlagen entdecken.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <!-- Eigene Icons aus assets  -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-192.png">
+  <link rel="shortcut icon" href="assets/icon.ico">
+  <title>FarbenScanner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="header">
+      <div class="logo-wrap">
+        <div class="logo-icon" aria-hidden="true">
+          <img src="assets/icon.svg" alt="" width="32" height="32" class="logo-img">
+        </div>
+        <h1 class="app-title">
+          <span class="title-part1">Farben</span><span class="title-part2">Scanner</span>
+        </h1>
+      </div>
+      <button id="menuBtn" class="icon-btn menu-btn" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="sideMenu">
+        <span class="hamburger"></span>
+      </button>
+    </header>
+
+    <main class="main">
+      <section class="actions" aria-label="Aktionen">
+        <button id="cameraBtn" class="action-btn" type="button" title="Kamera">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>Kamera</span>
+        </button>
+        <button id="imageBtn" class="action-btn" type="button" title="Bild laden">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+          <span>Bild</span>
+        </button>
+        <button id="paletteBtn" class="action-btn" type="button" title="Palette">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="8" r="1.5" fill="currentColor"/>
+            <circle cx="8" cy="14" r="1.5" fill="currentColor"/>
+            <circle cx="16" cy="14" r="1.5" fill="currentColor"/>
+          </svg>
+          <span>Palette</span>
+        </button>
+        <button id="templatesBtn" class="action-btn" type="button" title="Paletten-Vorlagen">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span>Vorlagen</span>
+        </button>
+      </section>
+
+      <section class="scanner-area" id="scannerArea">
+        <div class="preview-wrap" id="previewWrap">
+          <video id="video" class="preview-media" playsinline autoplay muted></video>
+          <canvas id="canvas" class="preview-media" style="display:none;"></canvas>
+          <img id="previewImg" class="preview-media" alt="Vorschau" style="display:none;">
+          <div class="crosshair" id="crosshair" aria-hidden="true" title="Ziehen zum Positionieren"></div>
+          <div class="placeholder" id="placeholder">
+            <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="32" cy="32" r="28"/>
+              <circle cx="32" cy="32" r="12"/>
+              <path d="M32 4v8M32 52v8M4 32h8M52 32h8"/>
+            </svg>
+            <p>Kamera oder Bild wählen,<br>dann Fadenkreuz setzen &amp; scannen</p>
+          </div>
+        </div>
+        <div class="scan-controls" id="scanControls" style="display:none;">
+          <button id="captureBtn" class="capture-btn" type="button">Farbe scannen</button>
+          <button id="stopCamBtn" class="secondary-btn" type="button">Stop</button>
+        </div>
+      </section>
+
+      <section class="result-panel" id="resultPanel" aria-live="polite">
+        <div class="result-swatch" id="resultSwatch"></div>
+        <div class="result-info">
+          <div class="result-name" id="resultName">–</div>
+          <div class="result-hex" id="resultHex">#––––––</div>
+          <div class="result-rgb" id="resultRgb">rgb(–, –, –)</div>
+        </div>
+        <div class="result-actions">
+          <button id="copyHexBtn" class="tiny-btn" type="button" title="HEX kopieren">HEX</button>
+          <button id="copyRgbBtn" class="tiny-btn" type="button" title="RGB kopieren">RGB</button>
+          <button id="addToPaletteBtn" class="tiny-btn" type="button" title="Zur Palette">+</button>
+        </div>
+      </section>
+
+      <section class="palette-strip" id="paletteStrip" aria-label="Aktuelle Palette">
+        <div class="palette-strip-title">Meine Palette <span id="paletteCount">0</span>/12</div>
+        <div class="palette-strip-colors" id="paletteStripColors"></div>
+        <button id="clearPaletteBtn" class="tiny-btn clear-btn" type="button">Leeren</button>
+      </section>
+    </main>
+
+<footer class="footer">
+  <button
+    id="coffeeTrigger"
+    class="coffee-trigger-button"
+    type="button"
+    aria-haspopup="dialog"
+    aria-controls="coffeeModal"
+  >
+    Kaffee
+  </button>
+
+  <div class="sub">
+    ◎ HUPSCLICK <span class="manfred-name">MANFRED HÄCKER</span>
+  </div>
+</footer>
+
+
+    <div id="rotateHint" class="rotate-hint" aria-hidden="true">
+      <svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="12" y="6" width="24" height="36" rx="3"/>
+        <path d="M28 42h-8M34 18l6-6M34 18l6 6M34 18H20"/>
+      </svg>
+      <span>Gerät drehen für bessere Ansicht</span>
+    </div>
+  </div>
+
+  <aside id="sideMenu" class="side-menu" aria-hidden="true">
+    <div class="side-menu-header">
+      <h2>Palette</h2>
+      <button id="closeMenuBtn" class="icon-btn" type="button" aria-label="Menü schließen">✕</button>
+    </div>
+    <div class="side-menu-body" id="sideMenuBody">
+      <p class="menu-hint">Gespeicherte Farben (Name + HEX)</p>
+      <div id="menuPaletteList" class="menu-palette-list"></div>
+      <button id="exportPaletteBtn" class="secondary-btn full-btn" type="button">Palette exportieren</button>
+    </div>
+  </aside>
+  <div id="menuOverlay" class="menu-overlay"></div>
+
+  <div id="templatesModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="templatesTitle" aria-hidden="true">
+    <div class="modal-card templates-card">
+      <header class="modal-header">
+        <h2 id="templatesTitle">Paletten-Vorlagen</h2>
+        <button id="closeTemplatesBtn" class="icon-btn" type="button" aria-label="Schließen">✕</button>
+      </header>
+      <div class="modal-body" id="templatesBody"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="coffeeModal" class="coffee-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="coffeeModalTitle" aria-hidden="true">
+    <section class="coffee-modal-card" role="document">
+      <header class="coffee-modal-header">
+        <h2 id="coffeeModalTitle" class="coffee-modal-title">FarbenScanner <span>1.1</span></h2>
+        <div class="coffee-modal-subtitle">
+          Eine Private App von Hupsclick
+          <span class="coffee-modal-email">regiemail@gmx.de</span>
+        </div>
+      </header>
+      <div class="coffee-modal-content">
+        <div class="coffee-modal-created-label">Erstellt von</div>
+        <div class="coffee-modal-author">Manfred&nbsp;<span>Häcker</span></div>
+        <p class="coffee-modal-description">
+          Der FarbenScanner überträgt keine Daten an mich als Entwickler.
+          Dennoch kann ich keine Verantwortung für Datenverarbeitungen übernehmen,
+          die durch das verwendete Gerät, den Browser, das Betriebssystem oder
+          installierte Drittanbieter-Dienste erfolgen.
+          Die Nutzung erfolgt auf eigene Verantwortung.
+          <span class="coffee-modal-thanks">Danke, dass du meine App verwendest.</span>
+        </p>
+        <div class="coffee-modal-divider"></div>
+        <div class="coffee-modal-support-label">☕ Hat dir die App gefallen?</div>
+        <a class="coffee-paypal-button" href="https://www.paypal.me/ManfredKaffee" target="_blank" rel="noopener noreferrer">
+          <span class="coffee-paypal-logo">
+            <span class="coffee-paypal-logo-pay">Pay</span><span class="coffee-paypal-logo-pal">Pal</span>
+          </span>
+          Kauf mir einen Kaffee
+        </a>
+        <p class="coffee-modal-hint">Jeder Kaffee hilft, weitere Projekte zu realisieren ✦</p>
+      </div>
+      <footer class="coffee-modal-footer">
+        <button id="coffeeClose" class="coffee-close-button" type="button">Schließen</button>
+      </footer>
+    </section>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" style="display:none;">
+  <script src="app.js"></script>
+</body>
+</html>
